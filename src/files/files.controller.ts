@@ -3,7 +3,8 @@ import { FileInterceptor } from '@nestjs/platform-express'
 import { FilesService } from './files.service';
 import { diskStorage } from 'multer';
 import { editFileName, validFileFilter } from 'src/utils/file-utils';
-import { CreatefileDto } from './dtos/createfile.dto';
+import { CreateFileDto } from './dtos/create-file.dto';
+import { UpdateFileDto } from './dtos/update-file.dto';
 @Controller('files')
 export class FilesController {
     constructor(private readonly fileService: FilesService) { }
@@ -25,14 +26,17 @@ export class FilesController {
         return this.fileService.findByFolder(folderId);
     }
     @Post()
-    createFolder(@Body() body){
-        return 'This creates a new folder';
+    createFolder(@Body() createFileDto:CreateFileDto){
+        console.log(`createFileDTO: ${createFileDto}`);
+        return this.fileService.createFolder(createFileDto);
     }
 
     @Patch(':id')
-    renameFileOrFilder()
+    updateFile(@Param("id") fileOrFolderId:number, @Body() updateFileDto:UpdateFileDto)
     {
-        //TODO
+        console.log(fileOrFolderId);
+        console.log(updateFileDto);
+        return this.fileService.updateFile(fileOrFolderId, updateFileDto);
     }
 
     @Delete(':id')
@@ -52,7 +56,7 @@ export class FilesController {
             fileFilter: validFileFilter,
         }),
     )
-    async uploadedFile(@UploadedFile() file, @Body() createFileDto:CreatefileDto) {
+    async uploadedFile(@UploadedFile() file, @Body() createFileDto:CreateFileDto) {
         return this.fileService.createFile(file,createFileDto);
     }
 
