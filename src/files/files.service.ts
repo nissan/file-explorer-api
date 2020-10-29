@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { extname } from 'path';
+import { In, Repository } from 'typeorm';
 import { CreateFileDto } from './dtos/create-file.dto';
 import { UpdateFileDto } from './dtos/update-file.dto';
 import { FileTypeEntity } from './entities/file-type.entity';
@@ -8,8 +10,14 @@ import { FileEntity } from './entities/file.entity';
 
 @Injectable()
 export class FilesService {
-    private seed = 100; //for test purposes until DB generates ids
-    private fileTypes: FileTypeEntity[] = [
+    constructor(
+        @InjectRepository(FileEntity)
+        private readonly fileRepository:Repository<FileEntity>,
+        @InjectRepository(FileTypeEntity)
+        private readonly fileTypeRepository:Repository<FileTypeEntity>
+    ){}
+      private seed = 100;
+      private fileTypes: FileTypeEntity[] = [
         {
             id: 1,
             name: 'CSV',
@@ -79,26 +87,26 @@ export class FilesService {
         },
     ]
 
-    findAll(offset = 0, limit = 20, isDeleted = false) {
-        console.log(offset);
-        console.log(limit);
-        console.log(offset + limit);
-        return this.files.filter(file => file.isDeleted === isDeleted).slice(offset, offset + limit);
+    async findAll(offset = 0, limit = 20, isDeleted = false) {
+        // const files = await this.fileRepository.find() //disabled to mock and demo
+        return this.files.filter(
+            file => file.isDeleted === isDeleted)
+            .slice(offset, offset + limit);
     }
 
-    findByFolder(folderId: number) {
-        const folderType = this.fileTypes.find(fileType => fileType.name === 'folder');
+    async findByFolder(folderId: number) {
+        //const folderType = (await this.fileTypeRepository.findOne()).name==='folder';
+        const folderType = this.fileTypes.find(file=>file.name==='folder');
+        if (!folderType) throw new NotFoundException("Can't find an index for folder type");
+        else {
         if (this.files.find(file => file.id === +folderId).fileTypeEntityId !== folderType.id)
             throw new NotFoundException(`${folderId} does not exist, is deleted or is not a valid folder`);
         const matches = this.files.filter(file => file.id !== +folderId && file.parentFolderId === +folderId);
         return matches;
+        }
     }
 
-    renameFileOrFolder(updateFileDto: any) {
-        // TODO:
-    }
-
-    deleteFileOrFolder(id: number) {
+    async deleteFileOrFolder(id: number) {
         //first find the file
         const match = this.files.find(file => file.id === +id);
         if (!match)
@@ -117,8 +125,8 @@ export class FilesService {
             fileType => fileType.name === 'folder');
         if (match.fileTypeEntityId === folderType.id) {
             try {
-                this.findByFolder(match.id)
-                    .forEach(child =>
+                (await this.findByFolder(match.id))
+                    .map(child =>
                         this.deleteFileOrFolder(child.id)
                     );
             }
@@ -126,7 +134,7 @@ export class FilesService {
         }
     }
 
-    createFile(file, createFileDto: CreateFileDto) {
+    async createFile(file, createFileDto: CreateFileDto) {
         const newFileEntity: FileEntity = {
             id: this.seed++,
             originalFileName: file.originalname,
@@ -140,7 +148,9 @@ export class FilesService {
             dateCreated: new Date(),
             dateLastUpdated: new Date(),
         }
-        this.files.push(newFileEntity);
+        this.files.push(newFileEntity); //disable once moved fully to DB
+
+        //await this.fileTypeRepository.save(newFileEntity);
         return newFileEntity;
     }
 
