@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { extname } from 'path';
 import { CreatefileDto } from './dtos/createfile.dto';
 import { FileTypeEntity } from './entities/file-type.entity';
 import { FileEntity } from './entities/file.entity';
@@ -6,6 +7,7 @@ import { FileEntity } from './entities/file.entity';
 
 @Injectable()
 export class FilesService {
+    private seed = 100; //for test purposes until DB generates ids
     private fileTypes:FileTypeEntity[] = [
         {
             id:1,
@@ -123,8 +125,20 @@ export class FilesService {
         }
     }
 
-    createFile(createFileDto:CreatefileDto){
-        //create the information to the database
-        return "done";
+    createFile(file, createFileDto:CreatefileDto){
+        const newFileEntity: FileEntity = {
+            id:this.seed++,
+            originalFileName:file.originalname,
+            storedFileName:file.filename,
+            fileTypeEntityId: this.fileTypes.find(
+                fileType=>fileType.extension
+                ===
+                (extname(file.originalname).slice(1))).id,
+            parentFolderId:+createFileDto.parentFolderId?+createFileDto.parentFolderId:1,
+            isDeleted: false,
+            dateCreated: new Date(),
+            dateLastUpdated: new Date(),
+        }   
+        this.files.push(newFileEntity);
     }
 }

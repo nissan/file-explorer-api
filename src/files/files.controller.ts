@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express'
 import { FilesService } from './files.service';
 import { diskStorage } from 'multer';
 import { editFileName, validFileFilter } from 'src/utils/file-utils';
@@ -17,7 +17,7 @@ export class FilesController {
     }
     @Get('/deleted')
     findAllDeletedFiles() {
-        return this.fileService.findAll(0,20,true);
+        return this.fileService.findAll(0,100,true);
     }
 
     @Get(":id")
@@ -30,8 +30,7 @@ export class FilesController {
     }
 
     @Patch(':id')
-    renameFileOrFilder(@Param('id')fileOrFolderId:number, 
-                        @Body() body)
+    renameFileOrFilder()
     {
         //TODO
     }
@@ -53,21 +52,8 @@ export class FilesController {
             fileFilter: validFileFilter,
         }),
     )
-    async uploadedFile(@UploadedFile() file, @Body() body) {
-        console.log(file);
-        const response = {
-            originalName: file.originalname,
-            fileName: file.filename,
-            filePath: body.filepath,
-            body: JSON.parse(body.createFileDto)
-        };
-        let createFileDto:CreatefileDto = body.createFileDto;
-        createFileDto.fileName = file.filename,
-
-
-        this.fileService.createFile(createFileDto)
-
-        return response;
+    async uploadedFile(@UploadedFile() file, @Body() createFileDto:CreatefileDto) {
+        return this.fileService.createFile(file,createFileDto);
     }
 
 

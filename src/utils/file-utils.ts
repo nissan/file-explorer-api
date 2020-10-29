@@ -1,4 +1,4 @@
-import { NotFoundException, UnprocessableEntityException } from "@nestjs/common";
+import { UnprocessableEntityException } from "@nestjs/common";
 import { extname } from "path";
 
 export const validFileFilter = (req, file, callback) => {
@@ -17,4 +17,4 @@ export const validFileFilter = (req, file, callback) => {
       .join('');
     callback(null, `${name}-${randomName}${fileExtName}`);
   };
-   
+  
