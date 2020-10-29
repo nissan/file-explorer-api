@@ -11,12 +11,17 @@ export class FilesController {
     @Get()
     findAll(@Query()paginationQuery) {
         const {limit,offset}=paginationQuery;
-        return this.fileService.findAll(limit, offset);
+        return this.fileService.findAll(offset?parseInt(offset):0,
+                                        limit?parseInt(limit):20,
+                                        );
+    }
+    @Get('/deleted')
+    findAllDeletedFiles() {
+        return this.fileService.findAll(0,20,true);
     }
 
     @Get(":id")
     findByFolder(@Param("id")folderId:number){
-        console.log(folderId);
         return this.fileService.findByFolder(folderId);
     }
     @Post()
@@ -24,17 +29,17 @@ export class FilesController {
         return 'This creates a new folder';
     }
 
-    @Patch(':fileOrFolderid')
-    renameFileOrFilder(@Param('fileOrFolderId')fileOrFolderId:number, 
+    @Patch(':id')
+    renameFileOrFilder(@Param('id')fileOrFolderId:number, 
                         @Body() body)
     {
-        return 'Rename a file or folder'
+        //TODO
     }
 
-    @Delete(':fileOrFolderId')
-    deleteFileOrFolder(@Param('fileOrFolderId')fileOrFolderId:number)
+    @Delete(':id')
+    deleteFileOrFolder(@Param('id')fileOrFolderId:number)
     {
-        return 'Deletes a file or folder'
+        return this.fileService.deleteFileOrFolder(fileOrFolderId);
     }
 
 // Reference: https://gabrieltanner.org/blog/nestjs-file-uploading-using-multer
